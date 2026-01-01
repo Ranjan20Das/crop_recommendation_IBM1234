@@ -1,78 +1,77 @@
 import streamlit as st
-import requests
+import pandas as pd
+import numpy as np
 
-# -----------------------------
-# 🔑 Your IBM Cloud credentials
-# -----------------------------
-API_KEY = "knv3K2iSf19SDTtkY6gqSlXRbEmm2dA4fRXIhOsA6RuJ"   # Replace with your real API key
-DEPLOYMENT_URL = "https://au-syd.ml.cloud.ibm.com/ml/v4/deployments/crop123/predictions?version=2021-05-01"
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
 
+# ------------------------------
+# Page Config
+# ------------------------------
+st.set_page_config(
+    page_title="Crop Recommendation System",
+    page_icon="🌱",
+    layout="centered"
+)
 
-# -----------------------------
-# Function to get IAM Token
-# -----------------------------
-def get_iam_token(api_key):
-    url = "https://iam.cloud.ibm.com/identity/token"
-    data = {
-        "apikey": api_key,
-        "grant_type": "urn:ibm:params:oauth:grant-type:apikey"
-    }
-    headers = {"Content-Type": "application/x-www-form-urlencoded"}
+st.title("🌾 Crop Recommendation System")
+st.write("Enter soil and climate details to get the best crop recommendation.")
 
-    response = requests.post(url, data=data, headers=headers)
+# ------------------------------
+# Load Dataset
+# ------------------------------
+@st.cache_data
+def load_data():
+    df = pd.read_csv("Crop_recommendation.csv")
+    return df
 
-    if response.status_code != 200:
-        st.error(f"❌ Failed to get IAM token: {response.text}")
-        return None
+df = load_data()
 
-    return response.json().get("access_token")
+# ------------------------------
+# Train Model
+# ------------------------------
+@st.cache_resource
+def train_model(df):
+    X = df.drop("label", axis=1)
+    y = df["label"]
 
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42
+    )
 
-# -----------------------------
-# Function to make prediction
-# -----------------------------
-def predict_crop(N, P, K, temperature, humidity, ph, rainfall):
-    token = get_iam_token(API_KEY)
-    if token is None:
-        return "❌ Authentication failed. Please check API key."
+    model = RandomForestClassifier(
+        n_estimators=200,
+        random_state=42
+    )
 
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {token}"
-    }
-    payload = {
-        "input_data": [{
-            "fields": ["N", "P", "K", "temperature", "humidity", "ph", "rainfall"],
-            "values": [[N, P, K, temperature, humidity, ph, rainfall]]
-        }]
-    }
+    model.fit(X_train, y_train)
+    return model
 
-    response = requests.post(DEPLOYMENT_URL, headers=headers, json=payload)
+model = train_model(df)
 
-    if response.status_code != 200:
-        return f"❌ Prediction failed: {response.text}"
+# ------------------------------
+# User Inputs
+# ------------------------------
+st.subheader("🌱 Input Parameters")
 
-    result = response.json()
-    try:
-        return result["predictions"][0]["values"][0][0]
-    except Exception as e:
-        return f"⚠️ Unexpected response format: {result}"
+col1, col2 = st.columns(2)
 
+with col1:
+    N = st.number_input("Nitrogen (N)", min_value=0.0)
+    P = st.number_input("Phosphorus (P)", min_value=0.0)
+    K = st.number_input("Potassium (K)", min_value=0.0)
+    temperature = st.number_input("Temperature (°C)", min_value=0.0)
 
-# -----------------------------
-# Streamlit UI
-# -----------------------------
-st.title("🌱 Crop Prediction App")
-st.write("Enter soil & climate values to predict the best crop.")
+with col2:
+    humidity = st.number_input("Humidity (%)", min_value=0.0)
+    ph = st.number_input("pH Value", min_value=0.0, max_value=14.0)
+    rainfall = st.number_input("Rainfall (mm)", min_value=0.0)
 
-N = st.number_input("Nitrogen (N)", min_value=0, max_value=200, value=50)
-P = st.number_input("Phosphorus (P)", min_value=0, max_value=200, value=50)
-K = st.number_input("Potassium (K)", min_value=0, max_value=200, value=50)
-temperature = st.number_input("Temperature (°C)", min_value=0.0, max_value=50.0, value=25.0)
-humidity = st.number_input("Humidity (%)", min_value=0.0, max_value=100.0, value=60.0)
-ph = st.number_input("Soil pH", min_value=0.0, max_value=14.0, value=6.5)
-rainfall = st.number_input("Rainfall (mm)", min_value=0.0, max_value=300.0, value=100.0)
+# ------------------------------
+# Prediction
+# ------------------------------
+if st.button("🌾 Recommend Crop"):
+    input_data = np.array([[N, P, K, temperature, humidity, ph, rainfall]])
+    prediction = model.predict(input_data)[0]
 
-if st.button("🌾 Predict Crop"):
-    prediction = predict_crop(N, P, K, temperature, humidity, ph, rainfall)
-    st.success(f"✅ Predicted Crop: **{prediction}**")
+    st.success(f"✅ Recommended Crop: **{prediction.upper()}**")
