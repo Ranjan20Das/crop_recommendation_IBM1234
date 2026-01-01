@@ -87,7 +87,7 @@ Set main file path: crop_recommendation.py
 
 Click Deploy
 
-app will be deployed in streamlit cloud.
+⚠️ Streamlit Cloud provides long-term free hosting but does not guarantee lifetime uptime.
 
 📊 Sample Input
 Parameter	Value
@@ -113,6 +113,7 @@ Recommended Crop: RICE
 🐳 Docker support
 
 👨‍💻 Author
+
 Ranjan Das
 AI / ML Enthusiast | Full Stack Learner
 
