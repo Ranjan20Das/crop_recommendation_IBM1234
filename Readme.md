@@ -4,7 +4,8 @@ An AI-powered Crop Recommendation System that suggests the most suitable crop ba
 
 🚀 Live Demo
 
-👉 Hosted on Streamlit Cloud (Free Tier)
+👉 Hosted on Streamlit Cloud (Free Tier) = https://croprecommendationibm1234-ezydkje8jp5cdcprphteyq.streamlit.app/
+
 
 The app predicts the best crop using inputs such as N, P, K, temperature, humidity, pH, and rainfall.
 
@@ -122,4 +123,5 @@ AI / ML Enthusiast | Full Stack Learner
 This project is for educational and research purposes.
 
 Feel free to fork, modify, and use it for learning.
+
 
